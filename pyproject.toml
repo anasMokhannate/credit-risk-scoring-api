@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "credit-risk"
+version = "0.1.0"
+description = "Credit risk scoring pipeline on Databricks (Home Credit dataset, medallion architecture)"
+requires-python = ">=3.10"
+# Runtime dependencies are added step by step (Great Expectations, LightGBM, SHAP, MLflow).
+# PySpark and Delta are provided by the Databricks runtime, so they are only in the `local` extra.
+dependencies = []
+
+[project.optional-dependencies]
+local = [
+    "pyspark>=3.5,<4",
+    "delta-spark>=3.2,<4",
+]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
