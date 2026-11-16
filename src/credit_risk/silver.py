@@ -85,6 +85,10 @@ def null_placeholders(df: DataFrame, table: str) -> DataFrame:
     for column in DAYS_PLACEHOLDER_COLUMNS.get(table, ()):
         df = df.withColumn(column, F.when(F.col(column) != DAYS_PLACEHOLDER, F.col(column)))
     strings = [c for c, t in schema.items() if t == "string"]
+    if not strings:
+        # installments_payments has no text column, and Spark Connect (serverless)
+        # rejects withColumns() with nothing to change.
+        return df
     return df.withColumns(
         {c: F.when(~F.col(c).isin(*PLACEHOLDER_STRINGS), F.col(c)) for c in strings}
     )

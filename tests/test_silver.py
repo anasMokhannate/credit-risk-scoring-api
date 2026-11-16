@@ -84,3 +84,13 @@ def test_bureau_balance_without_bureau_is_dropped(spark, cfg):
     build_table(spark, cfg, "bureau")
 
     assert build_table(spark, cfg, "bureau_balance") == {"rows_in": 2, "rows_out": 1}
+
+
+def test_table_without_text_columns_is_cleaned(spark):
+    # installments_payments has no text column: nothing to replace, but it must still be typed.
+    raw = spark.createDataFrame(
+        [("1", "2", "-10.0", "100.5")],
+        "SK_ID_PREV string, SK_ID_CURR string, DAYS_INSTALMENT string, AMT_PAYMENT string",
+    )
+    row = clean(raw, "installments_payments").first()
+    assert (row["SK_ID_PREV"], row["DAYS_INSTALMENT"], row["AMT_PAYMENT"]) == (2 - 1, -10.0, 100.5)
