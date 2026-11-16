@@ -32,15 +32,19 @@ def get_spark(local_dir: str | Path = ".local") -> SparkSession:
         SparkSession.builder.master("local[*]")
         .appName("credit-risk")
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-        .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+        .config(
+            "spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"
+        )
         .config("spark.sql.warehouse.dir", str(root / "warehouse"))
         .config(
             "spark.hadoop.javax.jdo.option.ConnectionURL",
             f"jdbc:derby:;databaseName={root / 'metastore_db'};create=true",
         )
         .config("spark.driver.extraJavaOptions", f"-Dderby.system.home={root}")
+        .config("spark.driver.memory", "4g")
         .config("spark.sql.shuffle.partitions", "8")
         .config("spark.ui.enabled", "false")
+        .config("spark.ui.showConsoleProgress", "false")
         .enableHiveSupport()
     )
     return configure_spark_with_delta_pip(builder).getOrCreate()
