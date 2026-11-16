@@ -38,13 +38,21 @@ from credit_risk.config import SOURCE_TABLES, load_config
 COMPETITION = "home-credit-default-risk"
 config = load_config()
 
-username = dbutils.widgets.get("kaggle_username").strip()  # noqa: F821
-key = dbutils.widgets.get("kaggle_key").strip()  # noqa: F821
+username = dbutils.widgets.get("kaggle_username").strip().strip("\"'")  # noqa: F821
+key = dbutils.widgets.get("kaggle_key").strip().strip("\"'")  # noqa: F821
 assert key, "Fill in the kaggle_key widget at the top of the notebook, then run this cell again."
-if username:
-    os.environ["KAGGLE_USERNAME"], os.environ["KAGGLE_KEY"] = username, key
-else:
+
+# Start clean: credentials left over from an earlier attempt would be mixed with the new ones.
+for variable in ("KAGGLE_USERNAME", "KAGGLE_KEY", "KAGGLE_API_TOKEN"):
+    os.environ.pop(variable, None)
+new_style = key.startswith("KGAT_")
+if new_style:
     os.environ["KAGGLE_API_TOKEN"] = key
+else:
+    assert username, "A legacy key needs the kaggle_username widget too (your Kaggle username)."
+    assert "@" not in username, "Use your Kaggle username, not your email address."
+    os.environ["KAGGLE_USERNAME"], os.environ["KAGGLE_KEY"] = username, key
+print(f"Using a {'new-style token' if new_style else f'legacy key for user {username!r}'}")
 
 # COMMAND ----------
 
@@ -70,6 +78,20 @@ from kaggle.api.kaggle_api_extended import KaggleApi
 
 api = KaggleApi()
 api.authenticate()
+
+# Check the credentials on a small request before starting the 700 MB download.
+try:
+    api.competition_list_files(COMPETITION)
+except Exception as error:
+    status = getattr(getattr(error, "response", None), "status_code", None)
+    reasons = {
+        401: "Kaggle rejected the credentials. Create a new token on kaggle.com (Settings > API), "
+        "paste it again without quotes or spaces, and rerun from the credentials cell.",
+        403: "The credentials work but this account has not accepted the competition rules: "
+        f"open https://www.kaggle.com/competitions/{COMPETITION}/rules and accept them.",
+    }
+    raise RuntimeError(reasons.get(status, f"Kaggle could not be reached: {error}")) from error
+print("Kaggle credentials accepted")
 
 workdir = tempfile.mkdtemp()
 # One zip of about 700 MB; it stays on the compute's local disk and is deleted at the end.
