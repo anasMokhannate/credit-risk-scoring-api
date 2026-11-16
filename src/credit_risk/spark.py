@@ -43,6 +43,7 @@ def get_spark(local_dir: str | Path = ".local") -> SparkSession:
         .config("spark.driver.extraJavaOptions", f"-Dderby.system.home={root}")
         .config("spark.driver.memory", "4g")
         .config("spark.sql.shuffle.partitions", "8")
+        .config("spark.sql.execution.arrow.pyspark.enabled", "true")
         .config("spark.ui.enabled", "false")
         .config("spark.ui.showConsoleProgress", "false")
         .enableHiveSupport()

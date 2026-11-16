@@ -21,7 +21,8 @@ def read_raw(spark: SparkSession, config: Config, name: str) -> DataFrame:
     return (
         spark.read.option("header", True)
         .option("inferSchema", False)
-        .csv(config.raw_file(name))
+        # The trailing * also accepts a gzip-compressed upload (name.csv.gz).
+        .csv(config.raw_file(name) + "*")
         .withColumn("_source_file", F.col("_metadata.file_path"))
         .withColumn("_ingested_at", F.current_timestamp())
     )

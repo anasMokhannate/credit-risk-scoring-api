@@ -47,6 +47,11 @@ class Config:
     def table(self, layer: str, name: str) -> str:
         return f"{self.schema(layer)}.{name.lower()}"
 
+    @property
+    def model_name(self) -> str:
+        """Registered model name: three levels in Unity Catalog, a plain name locally."""
+        return f"{self.catalog}.gold.pd_model" if self.catalog else "pd_model"
+
     def raw_file(self, name: str) -> str:
         return f"{self.raw_path.rstrip('/')}/{name}.csv"
 
