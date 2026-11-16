@@ -7,6 +7,7 @@ from credit_risk.quality import (
     WARNING,
     QualityGateError,
     bronze_suites,
+    gold_suites,
     run_gate,
     silver_suites,
     validate,
@@ -80,3 +81,4 @@ def test_warning_failure_is_recorded_without_stopping(spark, cfg, clients):
 def test_every_table_has_a_suite():
     assert set(bronze_suites()) == set(SOURCE_TABLES)
     assert set(silver_suites()) == set(SILVER_SOURCES)
+    assert set(gold_suites()) == {"features"}

@@ -45,7 +45,7 @@ for i, (name, expectation) in enumerate(checks.items()):
         batch = source.add_dataframe_asset(name=f"a{i}").add_batch_definition_whole_dataframe("b")
         result = batch.get_batch(batch_parameters={"dataframe": df}).validate(expectation)
         report.append((name, True, result.success == expected[name], ""))
-    except Exception as error:
+    except Exception as error:  # noqa: BLE001 (any failure is what this notebook reports)
         report.append((name, False, False, f"{type(error).__name__}: {error}"[:300]))
 
 display(  # noqa: F821

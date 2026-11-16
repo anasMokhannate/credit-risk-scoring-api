@@ -166,7 +166,48 @@ def silver_suites() -> dict[str, list]:
     }
 
 
-SUITES = {"bronze": bronze_suites, "silver": silver_suites}
+def gold_suites() -> dict[str, list]:
+    """Gate 2: is the feature table fit for modelling?"""
+    shares = (
+        "BUREAU_ACTIVE_SHARE",
+        "BUREAU_BB_LATE_SHARE_MEAN",
+        "PREV_APPROVED_SHARE",
+        "PREV_REFUSED_SHARE",
+        "INST_LATE_SHARE",
+        "INST_LATE_SHARE_12M",
+        "POS_DPD_SHARE",
+        "CC_MIN_PAYMENT_MISSED_SHARE",
+        "EXT_SOURCE_MEAN",
+    )
+    counts = ("BUREAU_COUNT", "PREV_COUNT", "INST_COUNT", "POS_LOAN_COUNT", "CC_CARD_COUNT")
+    return {
+        "features": [
+            gxe.ExpectTableRowCountToBeBetween(min_value=1, meta=CRITICAL),
+            _not_null("SK_ID_CURR"),
+            _unique("SK_ID_CURR"),
+            _in_set("dataset", ["train", "test"]),
+            _in_set("TARGET", [0, 1]),
+            _between("AGE_YEARS", low=18, high=100),
+            _between("CREDIT_INCOME_RATIO", low=0, strict_min=True),
+            _between("ANNUITY_INCOME_RATIO", low=0, strict_min=True),
+            _between("EMPLOYED_AGE_RATIO", low=0, high=1),
+            *[_between(c, low=0, high=1) for c in shares],
+            *[_between(c, low=1) for c in counts],
+            _between("INST_DAYS_LATE_MEAN", low=0),
+            _between("INST_UNDERPAID_SUM", low=0),
+            # Most applicants have a history; a collapse means a join or an upstream load broke.
+            _not_null("BUREAU_COUNT", meta=WARNING, mostly=0.80),
+            _not_null("PREV_COUNT", meta=WARNING, mostly=0.90),
+            _not_null("INST_COUNT", meta=WARNING, mostly=0.90),
+            # The default rate of the labelled population is about 8%.
+            gxe.ExpectColumnMeanToBeBetween(
+                column="TARGET", min_value=0.05, max_value=0.12, meta=WARNING
+            ),
+        ]
+    }
+
+
+SUITES = {"bronze": bronze_suites, "silver": silver_suites, "gold": gold_suites}
 
 
 def _context():
